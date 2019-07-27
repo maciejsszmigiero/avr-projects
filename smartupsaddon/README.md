@@ -7,14 +7,24 @@ In its current form it contains a temperature controller which:
 
 * has two-speed (plus a fan-disabled mode) fan controller with fan failure monitoring,
 
-* supports data readout (temperature, fan speed) via UPS built-in UPS-Link serial port
-  (replacing the *y* command which normally shows just a copyright notice),
+* supports data readout (temperature, fan speed) via the UPS built-in UPS-Link serial port
+  (replacing the *y* rarely used protocol command which normally shows just a copyright notice),
 
-* does not occupy a SmartSlot bay (and shouldn't cause problems for SmartSlot peripherals),
+* fits inside the UPS proper, leaving the UPS SmartSlot expansion bay free for other uses
+  (and so shouldn't cause problems for SmartSlot peripherals),
 
-* supports in-field firmware update via UPS built-in serial port (no UPS opening necessary).
+* follows a careful fail-safe design rules to make sure that start-up or in-operation transients do not result in unsafe outputs,
 
-The addon has a complete control of UPS built-in UPS-Link serial port so it could also be used for things like:
+* utilizes a hardware always-on watchdog and brownout detector protection,
+  with the boot loader flash memory section hardware-protected against an accidental overwrite,
+
+* supports safe in-field firmware update via the UPS built-in serial port (no opening of the UPS is necessary),
+
+* uses compiler barriers and interrupt disabling "atomic blocks" where necessary to avoid declaring variables shared with interrupt handlers as volatile,
+
+* has a large hardware potential for extra functionality implementable via just a firmware update.
+
+The addon has a complete control of the UPS built-in UPS-Link serial port so it could also be used for things like:
 * adding new serial commands,
 
 * modifying responses of existing commands, or even:
@@ -51,7 +61,7 @@ how to get the correct values for them.
 ## Compiling the firmware
 
 Take a look at the *build.base* file. There are various debug defines at its top.
-For release code you don't need to uncomment any of them, but if you would like to enable a some debug feature then first copy the *build.base* file to a file named *build*,
+For release code you don't need to uncomment any of them, but if you would like to enable some debug feature then first copy the *build.base* file to a file named *build*,
 then make adjustments only in this file, so your local changes won't clash with future changes to *build.base*.
 
 Now you can build the code by typing:
@@ -67,11 +77,11 @@ The firmware will be built to a file named *smartupsaddon.hex*.
 
 ## Programming the firmware
 
-The firmware can be programmed after the addon is mounted inside the UPS via UPS built-in serial port.
+The firmware can be programmed after the addon is mounted inside the UPS via the UPS built-in serial port.
 
 In order to do so:
 1. Press and hold the button connected to the *J6* connector for about 5 seconds.
-   This will reset the µC and then (when the button is finally released) make it enter the bootloader.
+   This will reset the µC and then (when the button is finally released) make the addon enter the bootloader.
    If the fan was not in the highest speed setting before you'll hear it switch to this (fallback) setting.
 
 1. Use *avrdude* to write the firmware file *smartupsaddon.hex* via the bootloader (use programmer type *stk500v2*, speed 115200 bps).
@@ -112,9 +122,9 @@ By default there are three TC74 sensors defined in the code:
 
 1. TC74A3-5.0VAT to be mounted on the UPS inverter transistors heatsink,
 
-1. TC74A7-5.0VAT to be mounted on the UPS main transformer (with temperature limits raised by 20°C).
+1. TC74A7-5.0VAT to be mounted on the UPS main transformer (with temperature limits raised by 20 °C).
 
-You can adjust sensor count, their addresses and offsets of temperature limits in temp.c file.
+You can adjust sensor count, their addresses and offsets of temperature limits in the temp.c file.
 
 *U8* should be a 24 volts to 12 volts DC / DC converter with 7812 (TO-220 package)-compatible pinout (it could be even an actual 7812, perhaps with an output capacitor and a small heatsink).
 
@@ -122,8 +132,8 @@ You can adjust sensor count, their addresses and offsets of temperature limits i
 
 ### <a name="pcb-attaching"></a>Attaching the PCB
 
-The PCB should be mounted on the back wall of the battery compartment using ~10mm spacers, which clip into horizontal slots with rounded ends located on the top of this wall.
-Additionally, a ~10mm PCB support should be inserted in the PCB hole near *D1* cathode.
+The PCB should be mounted on the back wall of the battery compartment using ~10 mm spacers, which clip into horizontal slots with rounded ends located on the top of this wall.
+Additionally, a ~10 mm PCB support should be inserted in the PCB hole near *D1* cathode.
 
 #### Photos:
 
@@ -141,14 +151,14 @@ The addon mounted...:
 
 You'll need a 24 volt supply for the fan (*J4* connector).
 
-You can get it from the UPS's original fan connector after either shorting emitter to collector leads of one of fan switching transistors
-(fan transistors are likely called *Q42* or *Q44* on the UPS mainboard) or
-by taking only a 24 volt positive rail from this connector and a ground rail from a some another point or connector (where it is permanently present).
+You can get it from the UPS's original fan connector after either shorting emitter to collector leads of one of the fan switching transistors
+(the fan transistors are likely called *Q42* or *Q44* on the UPS mainboard) or
+by taking only the 24 volt positive rail from this connector and the ground rail from some another point or connector (where it is permanently present).
 
 ### Fan connection
 
 A fan with a tachometer output (a "three wire" fan) is needed for fan RPM monitoring.
-This is a nearly the same type as is commonly used for PC cooling - but with a 24-volt voltage rating.
+This is nearly the same type as is commonly used for PC cooling - but with 24-volt voltage rating.
 
 Additionally, the addon uses the same fan connector type with the same pinout as PC fans use -
 this means that a PC fan of suitable dimensions and voltage rating can be used directly without needing to rewire it first.
@@ -180,7 +190,7 @@ The second sensor should be mounted on the UPS inverter transistors heatsink.
 
 This heatsink in fact comprises four separate heatsinks close to each other and isolated electrically.
 Since they are located so close together and their transistors should have the same duty cycle it can be assumed that
-their temperatures will also be very close, so installing a sensor on just one of them is enough.
+their temperatures will also be very close, so installing the sensor on just one of them is enough.
 
 In fact, some SUAxx00RMI2U models have a thermistor for extra protection of the switching transistors which is
 similarly attached to only one of the heatsinks.
@@ -194,18 +204,18 @@ Use an insulating pad with good thermal conductivity and secure the sensor using
 Sometimes (especially when the UPS is charging its batteries at high current) there might be a problem communicating with this sensor -
 it looks like the current in heatsink couples magnetically to either I²C lines or the sensor itself.
 To fix this issue the distance between heatsink surface and the sensor should be increased (for example by putting multiple thermally conductive pads between them or a thicker one)
-and / or twisted pair cable should be used for I²C bus lines leading to this sensor.
+and / or twisted pair cable should be used for the I²C bus lines leading to this sensor.
 
 [![](docs/img/install-4-th.jpg "view from the top, the UPS front is at the bottom of the photo")](docs/img/install-4.jpg)
 
 #### Main transformer
 
 The third sensor should be mounted on the UPS main transformer.
-Use a thermally conductive but electrically insulating pad to be sure there are no ground loops from the sensor tab via the transformer core (lamination coating of its plates is very thin).
+Use a thermally conductive but electrically insulating pad to be sure there are no ground loops from the sensor tab via the transformer core (as lamination coating of its plates is very thin).
 
 You may need to install the sensor on a transformer side since there might not be enough clearance between the transformer top and the UPS top lid to fit the sensor there.
 
-This sensor has its temperature limits raised by 20°C, since the transformer gets a bit warm even when the UPS is float charging its batteries without any load -
+This sensor has its temperature limits raised by 20 °C, since the transformer gets a bit warm even when the UPS is float charging its batteries without any load -
 without this offset the fan would run very often, even more often than the UPS built-in µC would turn it on.
 
 [![](docs/img/install-5-th.jpg "view from the top, the UPS front is at the bottom of the photo")](docs/img/install-5.jpg)
@@ -219,6 +229,6 @@ clip slot and tied to ventilation holes on an UPS side using a cable tie - see t
 #### Photos:
 
 One possible way of the pushbutton installation:
-[![](docs/img/install-6-th.jpg "view from the top, the UPS front is at the right side of the photo")](docs/img/install-6.jpg)
+[![](docs/img/install-6-th.jpg "view from the top, the UPS front is on the right side of the photo")](docs/img/install-6.jpg)
 [![](docs/img/install-7-th.jpg "the right side of the UPS")](docs/img/install-7.jpg)
 [![](docs/img/install-8-th.jpg)](docs/img/install-8.jpg)
